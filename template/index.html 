@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PharmaStock AI</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f5f9;
+            margin: 0;
+            color: #243447;
+        }
+
+        header {
+            background: #123b63;
+            color: white;
+            padding: 22px;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        header p {
+            margin-bottom: 0;
+        }
+
+        main {
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(
+                auto-fit, minmax(140px, 1fr)
+            );
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #00000010;
+        }
+
+        .card h3 {
+            font-size: 14px;
+            margin-top: 0;
+        }
+
+        .number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .form-box, .table-box {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow-x: auto;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(
+                auto-fit, minmax(180px, 1fr)
+            );
+            gap: 12px;
+        }
+
+        input, button {
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid #ccd4dd;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        button {
+            background: #087f70;
+            color: white;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e9ef;
+        }
+
+        th {
+            background: #edf3f8;
+        }
+
+        .expired {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .warning {
+            color: #b76e00;
+            font-weight: bold;
+        }
+
+        .good {
+            color: #087f70;
+            font-weight: bold;
+        }
+
+        .stock-warning {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>PharmaStock AI</h1>
+    <p>Pharmaceutical Inventory & Expiry Management</p>
+</header>
+
+<main>
+
+    <section class="cards">
+
+        <div class="card">
+            <h3>Product Records</h3>
+            <div class="number">{{ total_products }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Total Units</h3>
+            <div class="number">{{ total_units }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Low Stock</h3>
+            <div class="number">{{ low_stock }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Expired Products</h3>
+            <div class="number">{{ expired }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Expiring Within 90 Days</h3>
+            <div class="number">{{ expiring_soon }}</div>
+        </div>
+
+    </section>
+
+    <section class="form-box">
+        <h2>Add a Product</h2>
+
+        <form action="/add" method="POST">
+
+            <input
+                type="text"
+                name="name"
+                placeholder="Product name"
+                required
+            >
+
+            <input
+                type="text"
+                name="batch_number"
+                placeholder="Batch number"
+                required
+            >
+
+            <input
+                type="number"
+                name="quantity"
+                placeholder="Quantity"
+                min="0"
+                required
+            >
+
+            <input
+                type="number"
+                name="reorder_level"
+                placeholder="Low-stock threshold"
+                min="0"
+                value="20"
+                required
+            >
+
+            <input
+                type="number"
+                name="purchase_price"
+                placeholder="Purchase price"
+                min="0"
+                step="0.01"
+                required
+            >
+
+            <input
+                type="number"
+                name="selling_price"
+                placeholder="Selling price"
+                min="0"
+                step="0.01"
+                required
+            >
+
+            <label>
+                Expiry date
+                <input
+                    type="date"
+                    name="expiry_date"
+                    required
+                >
+            </label>
+
+            <button type="submit">Save Product</button>
+
+        </form>
+    </section>
+
+    <section class="table-box">
+        <h2>Inventory Records</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Batch</th>
+                    <th>Quantity</th>
+                    <th>Purchase Price</th>
+                    <th>Selling Price</th>
+                    <th>Expiry Date</th>
+                    <th>Expiry Status</th>
+                    <th>Stock Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td>{{ p["name"] }}</td>
+
+                    <td>{{ p["batch_number"] }}</td>
+
+                    <td>{{ p["quantity"] }}</td>
+
+                    <td>₦{{ "%.2f"|format(p["purchase_price"]) }}</td>
+
+                    <td>₦{{ "%.2f"|format(p["selling_price"]) }}</td>
+
+                    <td>{{ p["expiry_date"] }}</td>
+
+                    <td>
+                        {% set status = get_expiry_status(p["expiry_date"]) %}
+
+                        <span class="{% if status == 'EXPIRED' %}expired{% elif status == 'EXPIRING SOON' %}warning{% else %}good{% endif %}">
+                            {{ status }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {% if p["quantity"] <= p["reorder_level"] %}
+                            <span class="stock-warning">LOW STOCK</span>
+                        {% else %}
+                            <span class="good">IN STOCK</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% else %}
+                <tr>
+                    <td colspan="8">
+                        No products recorded yet. Add your first product above.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </section>
+
+</main>
+
+<footer>
+    PharmaStock AI — Inventory Management Prototype
+</footer>
+
+</body>
+</html>
