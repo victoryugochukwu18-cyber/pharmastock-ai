@@ -1,0 +1,2 @@
+# pharmastock-ai
+pharmaceutical aid
